@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<link rel="icon" type="image/png" href="assets/logo.png">
+<link rel="apple-touch-icon" href="assets/logo.png">
+<meta name="theme-color" content="#000000">
+<title>Calculator</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none}
+  :root{--bg:#000;--surface:#0a0a0a;--card:#111;--border:#1a1a1a;--primary:#6366f1;--success:#10b981;--danger:#ef4444;--warn:#f59e0b;--text:#f5f5f5;--muted:#666}
+  html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;overscroll-behavior:none}
+  body{display:flex;flex-direction:column}
+  .mono{font-family:'JetBrains Mono','SF Mono',Menlo,monospace}
+  header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border);flex-shrink:0}
+  header .title{font-size:11px;letter-spacing:3px;color:var(--muted);font-weight:700}
+  header .brand{font-size:13px;font-weight:800;letter-spacing:1px;color:var(--primary)}
+  nav{display:flex;overflow-x:auto;border-bottom:1px solid var(--border);flex-shrink:0;scrollbar-width:none}
+  nav::-webkit-scrollbar{display:none}
+  .tab{padding:12px 16px;font-size:12px;font-weight:600;color:var(--muted);white-space:nowrap;background:none;border:none;border-bottom:2px solid transparent;cursor:pointer;transition:color .15s}
+  .tab.active{color:var(--primary);border-bottom-color:var(--primary)}
+  main{flex:1;overflow-y:auto;overflow-x:hidden;scrollbar-width:thin;scrollbar-color:#1a1a1a transparent;-webkit-overflow-scrolling:touch}
+  main::-webkit-scrollbar{width:4px}
+  main::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+  .panel{display:none;padding:14px}
+  .panel.active{display:block}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:10px}
+  .label{font-size:10px;color:var(--muted);letter-spacing:1.5px;font-weight:700;margin-bottom:8px;text-transform:uppercase}
+  .input{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px 12px;color:var(--text);font-size:14px;outline:none;transition:border-color .15s;font-family:inherit}
+  .input:focus{border-color:var(--primary)}
+  select.input{cursor:pointer}
+  .btn{width:100%;background:var(--primary);color:#fff;border:none;border-radius:8px;padding:11px;font-size:13px;font-weight:700;cursor:pointer;transition:filter .15s,transform .1s}
+  .btn:active{transform:scale(.98);filter:brightness(1.15)}
+  .btn-ghost{background:var(--card);border:1px solid var(--border);color:var(--primary)}
+  .row{display:flex;gap:8px;align-items:center}
+  .list-btn{width:100%;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px;color:var(--text);font-size:13px;font-weight:600;text-align:left;cursor:pointer;display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;transition:border-color .15s;font-family:inherit}
+  .list-btn:active{border-color:var(--primary)}
+  .list-btn .arrow{color:var(--muted);font-size:14px}
+  .result{text-align:center;font-size:17px;font-weight:700;color:var(--success);margin-top:10px;min-height:22px;word-break:break-all}
+
+  /* Display */
+  .display{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;min-height:110px;display:flex;flex-direction:column;justify-content:flex-end;margin-bottom:10px;overflow:hidden}
+  .expr{color:var(--muted);font-size:13px;text-align:right;min-height:18px;margin-bottom:6px;word-break:break-all;max-height:40px;overflow-y:auto;font-family:'JetBrains Mono',Menlo,monospace}
+  .expr::-webkit-scrollbar{width:3px}
+  .expr::-webkit-scrollbar-thumb{background:var(--border)}
+  .result-main{text-align:right;font-weight:300;word-break:break-all;line-height:1.1;font-family:'JetBrains Mono',Menlo,monospace;transition:font-size .1s}
+  .mem-ind{font-size:9px;color:var(--warn);font-weight:700;letter-spacing:2px;margin-bottom:4px;visibility:hidden}
+  .mem-ind.on{visibility:visible}
+
+  /* Keypad */
+  .kp{display:grid;gap:6px}
+  .kp-5{grid-template-columns:repeat(5,1fr)}
+  .kp-4{grid-template-columns:repeat(4,1fr)}
+  .k{height:44px;border:1px solid var(--border);background:var(--card);color:var(--text);border-radius:9px;font-size:14px;font-weight:500;cursor:pointer;transition:background .12s,transform .08s;font-family:'JetBrains Mono',Menlo,monospace;display:flex;align-items:center;justify-content:center}
+  .k:active{background:#1a1a1a;transform:scale(.96)}
+  .k.fn{color:#22d3ee;font-size:11px;font-weight:700}
+  .k.op{background:rgba(99,102,241,.15);border-color:rgba(99,102,241,.4);color:#a5b4fc;font-size:18px;font-weight:700}
+  .k.op:active{background:rgba(99,102,241,.3)}
+  .k.eq{background:var(--success);border-color:var(--success);color:#fff;font-size:18px;font-weight:800}
+  .k.ac{background:rgba(239,68,68,.12);border-color:rgba(239,68,68,.35);color:#fca5a5;font-weight:700}
+  .k.mem{background:rgba(245,158,11,.1);border-color:rgba(245,158,11,.3);color:var(--warn);font-size:11px;font-weight:700}
+  .k.wide{grid-column:span 2}
+
+  /* History */
+  .hist-panel{position:fixed;inset:0;z-index:100;display:none}
+  .hist-panel.open{display:block}
+  .hist-backdrop{position:absolute;inset:0;background:rgba(0,0,0,.7)}
+  .hist-sheet{position:absolute;top:0;left:0;right:0;height:75%;background:var(--surface);border-bottom:1px solid var(--border);border-radius:0 0 20px 20px;display:flex;flex-direction:column;transform:translateY(-100%);transition:transform .28s cubic-bezier(.4,0,.2,1)}
+  .hist-panel.open .hist-sheet{transform:translateY(0)}
+  .hist-hdr{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:1px solid var(--border)}
+  .hist-hdr h2{font-size:11px;letter-spacing:3px;color:var(--warn);font-weight:800}
+  .hist-hdr button{background:var(--card);border:1px solid var(--border);color:var(--muted);padding:6px 12px;border-radius:6px;font-size:10px;font-weight:700;letter-spacing:1px;cursor:pointer}
+  .hist-list{flex:1;overflow-y:auto;padding:10px 14px}
+  .hist-item{padding:12px;border-bottom:1px solid var(--border);cursor:pointer;border-radius:6px}
+  .hist-item:active{background:var(--card)}
+  .hist-item .he{color:var(--muted);font-size:11px;margin-bottom:4px;word-break:break-all;font-family:'JetBrains Mono',Menlo,monospace}
+  .hist-item .hr{color:var(--text);font-size:17px;font-weight:600;word-break:break-all;font-family:'JetBrains Mono',Menlo,monospace}
+  .empty{text-align:center;color:var(--muted);padding:50px 0;font-size:12px;letter-spacing:1px}
+
+  .chips{display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;scrollbar-width:none;margin-bottom:8px}
+  .chips::-webkit-scrollbar{display:none}
+  .chip{padding:6px 12px;border-radius:16px;font-size:11px;font-weight:700;background:var(--card);border:1px solid var(--border);color:var(--muted);white-space:nowrap;cursor:pointer;transition:all .15s}
+  .chip.active{background:var(--primary);border-color:var(--primary);color:#fff}
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+  .grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+</style>
+</head>
+<body>
+
+<header>
+  <span class="title">ALL-IN-ONE</span>
+  <span class="brand">CALCULATOR</span>
+  <button class="k" id="openHist" style="width:36px;height:36px;font-size:16px">☰</button>
+</header>
+
+<nav id="tabs">
+  <button class="tab active" data-p="scientific">Scientific</button>
+  <button class="tab" data-p="converter">Converter</button>
+  <button class="tab" data-p="currency">Currency</button>
+  <button class="tab" data-p="finance">Finance</button>
+  <button class="tab" data-p="math">Math</button>
+  <button class="tab" data-p="health">Health</button>
+  <button class="tab" data-p="date">Date</button>
+</nav>
+
+<main>
+  <section id="p-scientific" class="panel active"></section>
+  <section id="p-converter" class="panel"></section>
+  <section id="p-currency" class="panel"></section>
+  <section id="p-finance" class="panel"></section>
+  <section id="p-math" class="panel"></section>
+  <section id="p-health" class="panel"></section>
+  <section id="p-date" class="panel"></section>
+</main>
+
+<!-- History overlay -->
+<div class="hist-panel" id="histPanel">
+  <div class="hist-backdrop" id="histBackdrop"></div>
+  <div class="hist-sheet">
+    <div class="hist-hdr">
+      <h2>HISTORY</h2>
+      <div style="display:flex;gap:6px">
+        <button id="histClear">CLEAR</button>
+        <button id="histClose">✕</button>
+      </div>
+    </div>
+    <div class="hist-list" id="histList"></div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
